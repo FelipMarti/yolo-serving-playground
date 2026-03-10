@@ -1,0 +1,7 @@
+FROM ultralytics/ultralytics:latest
+
+WORKDIR /app
+
+COPY src ./src
+
+ENTRYPOINT ["python", "src/main.py"]

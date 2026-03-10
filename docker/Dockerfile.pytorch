@@ -1,0 +1,23 @@
+FROM pytorch/pytorch:2.10.0-cuda13.0-cudnn9-runtime
+
+WORKDIR /app
+
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-venv \
+    libglib2.0-0 \
+    libgl1 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+RUN pip install ultralytics opencv-python-headless requests
+
+COPY src ./src
+
+ENTRYPOINT ["python", "src/main.py"]
