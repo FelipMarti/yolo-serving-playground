@@ -1,19 +1,45 @@
+# ---------- builder ----------
+FROM python:3.12-slim AS builder
+
+WORKDIR /install
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade pip
+
+COPY requirements.txt .
+RUN pip install --prefix=/install -r requirements.txt \
+ && pip uninstall -y \
+    matplotlib \
+    scipy \
+    sympy \
+    networkx \
+    polars \
+    ultralytics-thop
+
+
+# ---------- runtime ----------
 FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-COPY requirements.txt .
-
-RUN pip install --no-cache-dir -r requirements.txt
-
+COPY --from=builder /install /usr/local
 COPY src ./src
 
 ENTRYPOINT ["python", "src/main.py"]
+

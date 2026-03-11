@@ -1,12 +1,12 @@
 # ---------- builder ----------
 FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS builder
 
-WORKDIR /app
+WORKDIR /build
 
-ENV PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
@@ -16,20 +16,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m venv /opt/venv
+RUN python3 -m venv /opt/venv --system-site-packages
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN pip install --upgrade pip
 
-COPY requirements-cuda.txt .
-RUN pip install -r requirements-cuda.txt
+COPY requirements.txt .
+RUN pip install -r requirements.txt \
+ && pip uninstall -y \
+    matplotlib \
+    scipy \
+    networkx \
+    polars \
+    ultralytics-thop
+
 
 # ---------- runtime ----------
 FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
 
 WORKDIR /app
 
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
@@ -38,6 +46,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 COPY src ./src
 
-ENTRYPOINT ["python3", "src/main.py"]
+ENTRYPOINT ["python", "src/main.py"]
