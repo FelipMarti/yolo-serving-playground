@@ -1,0 +1,69 @@
+services:
+
+  infer-python:
+    image: yolo-infer-python
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    volumes:
+      - ./models:/models
+      - ./data:/data
+    environment:
+      - MODEL_PATH=/models/best.pt
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    command: /data
+
+  infer-pytorch:
+    image: yolo-infer-pytorch
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.pytorch
+    volumes:
+      - ./models:/models
+      - ./data:/data
+    environment:
+      - MODEL_PATH=/models/best.pt
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    command: /data
+
+  infer-cuda:
+    image: yolo-infer-cuda
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.cuda
+    volumes:
+      - ./models:/models
+      - ./data:/data
+    environment:
+      - MODEL_PATH=/models/best.pt
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    command: /data
+
+  infer-ultralytics:
+    image: yolo-infer-ultralytics
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ultralytics
+    volumes:
+      - ./models:/models
+      - ./data:/data
+    environment:
+      - MODEL_PATH=/models/best.pt
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    command: /data
